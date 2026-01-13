@@ -1,0 +1,19 @@
+<script>
+async function send() {
+  const input = document.getElementById("chat-input");
+  const chat = document.getElementById("chat-body");
+  const msg = input.value;
+
+  chat.innerHTML += "<p><b>Bạn:</b> " + msg + "</p>";
+  input.value = "";
+
+  const res = await fetch("https://chatbot.liuprincekun6.workers.dev", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: msg })
+  });
+
+  const data = await res.json();
+  chat.innerHTML += "<p><b>Bot:</b> " + data.reply + "</p>";
+}
+</script>
