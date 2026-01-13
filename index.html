@@ -4,55 +4,35 @@
     <input id="chat-input" placeholder="Nhập câu hỏi...">
     <button onclick="send()">Gửi</button>
   </div>
- export default {
-  async fetch(request, env) {
+<script>
+async function send() {
+  const input = document.getElementById("chat-input");
+  const chat = document.getElementById("chat-body");
+  const message = input.value;
 
-    // Chỉ cho phép POST
-    if (request.method !== "POST") {
-      return new Response("Only POST allowed", { status: 405 });
+  if (!message) return;
+
+  // Hiển thị câu hỏi
+  chat.innerHTML += "<p><b>Bạn:</b> " + message + "</p>";
+  input.value = "";
+
+  // Gửi sang Cloudflare Worker
+  const response = await fetch(
+    "https://chatbot-gemini.phucluukhanh.workers.dev",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: message
+      })
     }
+  );
 
-    // Lấy nội dung gửi từ website
-    const body = await request.json();
-    const message = body.message;
+  const data = await response.json();
 
-    // Gọi Gemini API
-    const res = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + env.GEMINI_API_KEY,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: "Bạn là chatbot tư vấn bảo hiểm xã hội Việt Nam. Trả lời ngắn gọn, đúng luật, không bịa.\nCâu hỏi: " + message
-                }
-              ]
-            }
-          ]
-        })
-      }
-    );
-
-    const data = await res.json();
-
-    // Lấy câu trả lời
-    const reply =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "Xin lỗi, tôi chưa có câu trả lời phù hợp.";
-
-    // Trả dữ liệu về website
-    return new Response(
-      JSON.stringify({ reply }),
-      {
-        headers: {
-          "Content-Type": "application/json"
-        }
-      }
-    );
-  }
-};
+  // Hiển thị câu trả lời AI
+  chat.innerHTML += "<p><b>Bot:</b> " + data.reply + "</p>";
+}
+</script>
