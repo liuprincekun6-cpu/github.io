@@ -198,37 +198,112 @@
     </div>
 </div>
 <script>
-async function send() {
-  const input = document.getElementById("input");
-  const chat = document.getElementById("chat");
-function getTime() {
-        const now = new Date();
-        return now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + " | Hệ thống";
-    }
+document.addEventListener('DOMContentLoaded', function() {
+        
+        // 1. Khai báo biến (Lấy phần tử HTML)
+        const chatBody = document.getElementById('chat-body');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
 
-    // Hàm thêm tin nhắn User
-    function appendUserMessage(text) {
-        const div = document.createElement('div');
-        div.className = 'user-msg-container';
-        div.innerHTML = `
-            <div class="user-msg">
-                ${text}
-                <span class="msg-time">${getTime()}</span>
-            </div>
-        `;
-        chatBody.appendChild(div);
-        chatBody.scrollTop = chatBody.scrollHeight;
-    }
-    function appendBotMessage(htmlContent) {
-        const div = document.createElement('div');
-        div.className = 'bot-msg-container';
-        div.innerHTML = `<div class="bot-msg">${htmlContent}</div>`;
-        chatBody.appendChild(div);
-        chatBody.scrollTop = chatBody.scrollHeight;
-    }
-    function handleEnter(e) {
-        if (e.key === 'Enter') send();
-    }
+        // 2. Hàm hỗ trợ
+        function getTime() {
+            const now = new Date();
+            return now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + " | Hệ thống";
+        }
+
+        function appendUserMessage(text) {
+            const div = document.createElement('div');
+            div.className = 'user-msg-container';
+            div.innerHTML = `
+                <div class="user-msg">
+                    ${text}
+                    <span class="msg-time">${getTime()}</span>
+                </div>
+            `;
+            chatBody.appendChild(div);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function appendBotMessage(htmlContent) {
+            const div = document.createElement('div');
+            div.className = 'bot-msg-container';
+            div.innerHTML = `<div class="bot-msg">${htmlContent}</div>`;
+            chatBody.appendChild(div);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        // 3. Hàm xử lý Gửi tin
+        async function send() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            // Hiển thị tin nhắn người dùng
+            appendUserMessage(text);
+            chatInput.value = '';
+
+            // Tạo hiệu ứng đang nhập
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'bot-msg-container';
+            loadingDiv.innerHTML = '<i>Đang tra cứu dữ liệu...</i>';
+            chatBody.appendChild(loadingDiv);
+            chatBody.scrollTop = chatBody.scrollHeight; // Cuộn xuống
+
+            try {
+                // --- BẮT ĐẦU GỌI API ---
+                // Lưu ý: Đổi URL này thành URL Worker của bạn nếu đã deploy
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+
+                const data = await res.json();
+                
+                // Xóa dòng "Đang tra cứu..."
+                if (loadingDiv.parentNode) {
+                    chatBody.removeChild(loadingDiv);
+                }
+
+                // Kiểm tra kết quả trả về
+                if (data.response) {
+                    appendBotMessage(data.response); // Nếu API trả về đúng
+                } else if (data.error) {
+                    appendBotMessage(`<b>Lỗi hệ thống:</b> ${JSON.stringify(data.error)}`);
+                } else {
+                    // Fallback nếu chạy local không có API
+                    // Demo giả lập (Xóa đoạn này khi chạy thật)
+                    appendBotMessage(`
+                        <p><b>Hệ thống ghi nhận câu hỏi:</b> "${text}"</p>
+                        <p>Hiện tại kết nối API chưa hoạt động (hoặc bạn đang chạy local file). Vui lòng deploy lên Cloudflare để test chức năng AI.</p>
+                    `);
+                }
+                // --- KẾT THÚC GỌI API ---
+
+            } catch (error) {
+                // Xử lý lỗi kết nối
+                if (loadingDiv.parentNode) chatBody.removeChild(loadingDiv);
+                appendBotMessage(`<span style="color:red">Lỗi kết nối: ${error.message}</span>`);
+            }
+        }
+
+        // 4. Gán sự kiện (Thay thế cho onclick/onkeypress cũ)
+        
+        // Sự kiện Click nút Gửi
+        if (sendBtn) {
+            sendBtn.addEventListener('click', send);
+        }
+
+        // Sự kiện Nhấn Enter trong ô nhập liệu
+        if (chatInput) {
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    send();
+                }
+            });
+        }
+    });
+
+                
   chat.innerHTML += "<p><b>Bạn:</b> " + input.value + "</p>";
 
   const res = await fetch("https://chatbot-gemini.liuprincekun6.workers.dev", {
