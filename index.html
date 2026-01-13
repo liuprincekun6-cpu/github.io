@@ -226,6 +226,9 @@ function getTime() {
         chatBody.appendChild(div);
         chatBody.scrollTop = chatBody.scrollHeight;
     }
+    function handleEnter(e) {
+        if (e.key === 'Enter') send();
+    }
   chat.innerHTML += "<p><b>Bạn:</b> " + input.value + "</p>";
 
   const res = await fetch("https://chatbot-gemini.liuprincekun6.workers.dev", {
