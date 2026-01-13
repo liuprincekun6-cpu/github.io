@@ -251,14 +251,16 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 // --- BẮT ĐẦU GỌI API ---
                 // Lưu ý: Đổi URL này thành URL Worker của bạn nếu đã deploy
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text })
+                const res = await fetch("https://chatbot-gemini.liuprincekun6.workers.dev", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: input.value })
                 });
 
                 const data = await res.json();
-                
+                  chat.innerHTML += "<p><b>Bạn:</b> " + input.value + "</p>";
+                  chat.innerHTML += "<p><b>Bot:</b> " + data.reply + "</p>";
+                  input.value = "";
                 // Xóa dòng "Đang tra cứu..."
                 if (loadingDiv.parentNode) {
                     chatBody.removeChild(loadingDiv);
@@ -302,20 +304,5 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
-
-                
-  chat.innerHTML += "<p><b>Bạn:</b> " + input.value + "</p>";
-
-  const res = await fetch("https://chatbot-gemini.liuprincekun6.workers.dev", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: input.value })
-  });
-
-  const data = await res.json();
-
-  chat.innerHTML += "<p><b>Bot:</b> " + data.reply + "</p>";
-
-  input.value = "";
 }
 </script>
