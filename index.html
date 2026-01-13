@@ -97,7 +97,7 @@
             if (!text) return;
 
             // Nếu chưa nhập API Key thì báo lỗi
-            if (API_KEY === 'AIzaSyB1lC0BtL2xSZAAOsnBcuUF764vvKpHvwg' || API_KEY === 'AIzaSyB1lC0BtL2xSZAAOsnBcuUF764vvKpHvwg') {
+            if (API_KEY === 'DÁN_API_KEY_CỦA_BẠN_VÀO_ĐÂY' || API_KEY === '') {
                 alert("Bạn chưa nhập API Key vào trong code!");
                 return;
             }
@@ -113,7 +113,7 @@
 
             try {
                 // GỌI TRỰC TIẾP GOOGLE (Không qua Cloudflare Worker nữa)
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${AIzaSyB1lC0BtL2xSZAAOsnBcuUF764vvKpHvwg}`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
                 
                 const response = await fetch(url, {
                     method: 'POST',
