@@ -61,6 +61,11 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         
+        // --- CẤU HÌNH ĐƯỜNG DẪN CHÍNH THỨC ---
+        // Đã cập nhật theo thông tin bạn cung cấp
+        const CLOUDFLARE_WORKER_URL = 'https://chatbot-gemini.liuprincekun6.workers.dev'; 
+        // --------------------------------------
+
         const chatBody = document.getElementById('chat-body');
         const chatInput = document.getElementById('chat-input');
         const sendBtn = document.getElementById('send-btn');
@@ -87,15 +92,13 @@
         }
 
         async function send() {
-            // 1. Lấy nội dung
             const text = chatInput.value.trim(); 
             if (!text) return;
 
-            // 2. Hiển thị tin nhắn người dùng
             appendUserMessage(text);
             chatInput.value = '';
 
-            // 3. Tạo hiệu ứng "Đang tra cứu..."
+            // Hiệu ứng đang tải
             const loadingDiv = document.createElement('div');
             loadingDiv.className = 'bot-msg-container';
             loadingDiv.innerHTML = '<i>Đang kết nối đến BHXH Cà Mau...</i>';
@@ -103,54 +106,38 @@
             chatBody.scrollTop = chatBody.scrollHeight;
 
             try {
-                // Kiểm tra xem đã điền link Cloudflare chưa
-                if (CLOUDFLARE_WORKER_URL.includes('https://chatbot-gemini.liuprincekun6.workers.dev')) {
-                    throw new Error("Vui lòng cập nhật đường dẫn Cloudflare Worker trong code!");
-                }
-
-                // --- GỌI QUA CLOUDFLARE ---
+                // Gửi tin nhắn lên Cloudflare Worker của bạn
                 const response = await fetch(CLOUDFLARE_WORKER_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        message: text // Chỉ gửi mỗi nội dung câu hỏi
+                        message: text 
                     })
                 });
 
-                // Kiểm tra nếu mạng lỗi hoặc server trả về lỗi
                 if (!response.ok) {
-                    throw new Error(`Lỗi HTTP: ${response.status}`);
+                    throw new Error(`Lỗi HTTP: ${response.status} - Kiểm tra lại Worker`);
                 }
 
                 const data = await response.json();
 
-                // Xóa dòng "Đang tra cứu..."
                 if (loadingDiv.parentNode) chatBody.removeChild(loadingDiv);
 
-                // Hiển thị câu trả lời
                 if (data.reply) {
-                     // Xử lý xuống dòng (\n -> <br>)
                      let formattedReply = data.reply.replace(/\n/g, '<br>');
-                     
-                     // Xử lý in đậm: đổi **chữ** thành <b>chữ</b> cho đẹp
                      formattedReply = formattedReply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-
                      appendBotMessage(formattedReply);
                 } else {
                      appendBotMessage("Hệ thống không phản hồi nội dung.");
                 }
 
             } catch (error) {
-                // Xóa dòng "Đang tra cứu..." nếu lỗi
                 if (loadingDiv.parentNode) chatBody.removeChild(loadingDiv);
-                
-                // Hiển thị lỗi màu đỏ
-                console.error(error); // In ra console để kiểm tra
-                appendBotMessage(`<span style="color:red">Sự cố kết nối: ${error.message}</span>`);
+                console.error(error);
+                appendBotMessage(`<span style="color:red">Lỗi kết nối: ${error.message}</span>`);
             }
         }
 
-        // Gán sự kiện click và nhấn Enter
         if (sendBtn) sendBtn.addEventListener('click', send);
         if (chatInput) {
             chatInput.addEventListener('keypress', function(e) {
