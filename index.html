@@ -144,14 +144,6 @@ async function send() {
                 appendBotMessage(`<span style="color:red">Lỗi kết nối: ${error.message}</span>`);
             }
         }
-    const data = await response.json();
-    // ... xử lý hiển thị ...
-    if (data.reply) {
-         // Xử lý xuống dòng
-         const formattedReply = data.reply.replace(/\n/g, '<br>');
-         appendBotMessage(formattedReply);
-    }
-    // ...
 }
 
         // Gán sự kiện
