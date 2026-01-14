@@ -86,7 +86,7 @@
             chatBody.scrollTop = chatBody.scrollHeight;
         }
 
-async function send() {
+        async function send() {
             // 1. Lấy nội dung
             const text = chatInput.value.trim(); 
             if (!text) return;
@@ -103,6 +103,11 @@ async function send() {
             chatBody.scrollTop = chatBody.scrollHeight;
 
             try {
+                // Kiểm tra xem đã điền link Cloudflare chưa
+                if (CLOUDFLARE_WORKER_URL.includes('TEN_CUA_BAN')) {
+                    throw new Error("Vui lòng cập nhật đường dẫn Cloudflare Worker trong code!");
+                }
+
                 // --- GỌI QUA CLOUDFLARE ---
                 const response = await fetch(CLOUDFLARE_WORKER_URL, {
                     method: 'POST',
@@ -112,7 +117,7 @@ async function send() {
                     })
                 });
 
-                // Kiểm tra nếu mạng lỗi hoặc server trả về lỗi 404/500
+                // Kiểm tra nếu mạng lỗi hoặc server trả về lỗi
                 if (!response.ok) {
                     throw new Error(`Lỗi HTTP: ${response.status}`);
                 }
@@ -127,7 +132,7 @@ async function send() {
                      // Xử lý xuống dòng (\n -> <br>)
                      let formattedReply = data.reply.replace(/\n/g, '<br>');
                      
-                     // (Mở rộng) Xử lý in đậm: đổi **chữ** thành <b>chữ</b> cho đẹp
+                     // Xử lý in đậm: đổi **chữ** thành <b>chữ</b> cho đẹp
                      formattedReply = formattedReply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 
                      appendBotMessage(formattedReply);
@@ -136,17 +141,16 @@ async function send() {
                 }
 
             } catch (error) {
-                // --- PHẦN BẠN HỎI NẰM Ở ĐÂY ---
                 // Xóa dòng "Đang tra cứu..." nếu lỗi
                 if (loadingDiv.parentNode) chatBody.removeChild(loadingDiv);
                 
                 // Hiển thị lỗi màu đỏ
-                appendBotMessage(`<span style="color:red">Lỗi kết nối: ${error.message}</span>`);
+                console.error(error); // In ra console để kiểm tra
+                appendBotMessage(`<span style="color:red">Sự cố kết nối: ${error.message}</span>`);
             }
         }
-}
 
-        // Gán sự kiện
+        // Gán sự kiện click và nhấn Enter
         if (sendBtn) sendBtn.addEventListener('click', send);
         if (chatInput) {
             chatInput.addEventListener('keypress', function(e) {
