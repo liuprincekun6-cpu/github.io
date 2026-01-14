@@ -86,39 +86,64 @@
             chatBody.scrollTop = chatBody.scrollHeight;
         }
 
-        async function send() {
-            // Lấy nội dung từ ô nhập liệu
+async function send() {
+            // 1. Lấy nội dung
             const text = chatInput.value.trim(); 
             if (!text) return;
 
-            // Nếu chưa nhập API Key thì báo lỗi
-            if (API_KEY === 'DÁN_API_KEY_CỦA_BẠN_VÀO_ĐÂY' || API_KEY === '') {
-                alert("Bạn chưa nhập API Key vào trong code!");
-                return;
-            }
-
+            // 2. Hiển thị tin nhắn người dùng
             appendUserMessage(text);
             chatInput.value = '';
 
+            // 3. Tạo hiệu ứng "Đang tra cứu..."
             const loadingDiv = document.createElement('div');
             loadingDiv.className = 'bot-msg-container';
-            loadingDiv.innerHTML = '<i>Đang tra cứu dữ liệu...</i>';
+            loadingDiv.innerHTML = '<i>Đang kết nối đến BHXH Cà Mau...</i>';
             chatBody.appendChild(loadingDiv);
             chatBody.scrollTop = chatBody.scrollHeight;
 
-            const CLOUDFLARE_WORKER_URL = 'https://chatbot-gemini.liuprincekun6.workers.dev'; 
+            try {
+                // --- GỌI QUA CLOUDFLARE ---
+                const response = await fetch(CLOUDFLARE_WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: text // Chỉ gửi mỗi nội dung câu hỏi
+                    })
+                });
 
-try {
-    const response = await fetch(CLOUDFLARE_WORKER_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // LƯU Ý: Bây giờ chỉ cần gửi mỗi biến "message" thôi
-        // Không gửi cả đoạn prompt dài loằng ngoằng nữa
-        body: JSON.stringify({ 
-            message: text 
-        })
-    });
+                // Kiểm tra nếu mạng lỗi hoặc server trả về lỗi 404/500
+                if (!response.ok) {
+                    throw new Error(`Lỗi HTTP: ${response.status}`);
+                }
 
+                const data = await response.json();
+
+                // Xóa dòng "Đang tra cứu..."
+                if (loadingDiv.parentNode) chatBody.removeChild(loadingDiv);
+
+                // Hiển thị câu trả lời
+                if (data.reply) {
+                     // Xử lý xuống dòng (\n -> <br>)
+                     let formattedReply = data.reply.replace(/\n/g, '<br>');
+                     
+                     // (Mở rộng) Xử lý in đậm: đổi **chữ** thành <b>chữ</b> cho đẹp
+                     formattedReply = formattedReply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+                     appendBotMessage(formattedReply);
+                } else {
+                     appendBotMessage("Hệ thống không phản hồi nội dung.");
+                }
+
+            } catch (error) {
+                // --- PHẦN BẠN HỎI NẰM Ở ĐÂY ---
+                // Xóa dòng "Đang tra cứu..." nếu lỗi
+                if (loadingDiv.parentNode) chatBody.removeChild(loadingDiv);
+                
+                // Hiển thị lỗi màu đỏ
+                appendBotMessage(`<span style="color:red">Lỗi kết nối: ${error.message}</span>`);
+            }
+        }
     const data = await response.json();
     // ... xử lý hiển thị ...
     if (data.reply) {
